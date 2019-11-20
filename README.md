@@ -32,7 +32,12 @@ Cloudiary storage: Hỗ trợ upload và lưu trữ hình ảnh
 Docker: ......
 
 Kiến trúc phần mềm:
-Hai kiến trúc chính: Client-server
+Kiến trúc chính: Client-server
 Tách biệt website thành ba thành phần riêng biệt: Client (Reactjs), Server(Expressjs), Database(MySQL)
 Server - client giao tiếp với nhau thông qua RESTful API, đảm bảo khả năng phát triển các chức năng song song nhau. Có thể chia nhỏ thành các server độc lập
 
+Kiến trúc phía server: MVC
+Gồm ba phần: 
+Thư mục views chứa các file template (file có phần mở rộng là .hbs), các file này được dùng để hiển thị dữ liệu, tức là tương tự với phần Views trong MVC.
+Thư mục routes được dùng để chuyển hướng các URL đến các hàm xử lý tương ứng, tức là tương tự với Controller trong MVC.
+Model: Dùng để truy xuất và lưu trữ dữ liệu
