@@ -4,6 +4,7 @@ const passportJWT = require("passport-jwt");
 const JWTStrategy = passportJWT.Strategy;
 const ExtractJWT = passportJWT.ExtractJwt;
 const UserModel = require('./Model/Users');
+const bcrypt = require('bcrypt');
 
 passport.use('user-local', new LocalStrategy({
     usernameField: 'email',
@@ -11,12 +12,17 @@ passport.use('user-local', new LocalStrategy({
 },
     function (email, password, cb) {
         //this one is typically a DB call. Assume that the returned user object is pre-formatted and ready for storing in JWT
-        return UserModel.findOne(email, password)
+        return UserModel.findByEmail(email)
             .then(user => {
-                if (!user) {
-                    return cb(null, false, { message: 'Incorrect email or password.' });
+                if (user.length === 0) {
+                    return cb(null, false, { message: 'Incorrect email.' });
                 }
-                return cb(null, user, { message: 'Logged In Successfully' });
+                let ret = bcrypt.compareSync(password, user[0].password);
+
+                if (ret) {
+                    return cb(null, user, { message: 'Logged In Successfully' });
+                }
+                return cb(null, false, { message: 'Incorrect password.' });
             })
             .catch(err => cb(err));
     }
@@ -76,16 +82,12 @@ passport.use(new JWTStrategy({
 },
     function (jwtPayload, cb) {
 
-        //console.log('-----', jwtPayload);
+        console.log('-----', jwtPayload);
         //find the user in db if needed. This functionality may be omitted if you store everything you'll need in JWT payload.
-        return UserModel.findOne({ _id: jwtPayload._id })
+        return UserModel.singleById(jwtPayload.userId)
             .then(user => {
-                return cb(null, {
-                    email: user.email,
-                    name: user.name,
-                    phone: user.phone,
-                    gender: user.gender
-                });
+                console.log('-----user', user);
+                return cb(null, user);
             })
             .catch(err => {
                 return cb(err);

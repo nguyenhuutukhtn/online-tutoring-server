@@ -1,8 +1,12 @@
 var express = require('express');
 var router = express.Router();
 const jwt = require('jsonwebtoken');
-const userModel = require('../Model/Users')
+const userModel = require('../Model/Users');
+const introduceModel = require('../Model/Introduce');
 const passport = require('passport');
+const passportJWT = require("passport-jwt");
+const ExtractJWT = passportJWT.ExtractJwt;
+const bcrypt = require('bcrypt');
 
 
 /* GET users listing. */
@@ -34,21 +38,39 @@ router.post('/changePassword', passport.authenticate('jwt', { session: false }),
 });
 
 router.post('/changeProfile', passport.authenticate('jwt', { session: false }), function (req, res, next) {
-  const user = userModel.findOne({ email: req.user.email })
-    .then(currentUser => {
-      if (req.body.name) {
-        currentUser.name = req.body.name
+
+  let tokens = req.headers.authorization.split(" ")[1];
+  var jwtPayload = jwt.verify(tokens, 'your_jwt_secret');
+  userModel.updateProfile(req.body.name, req.body.address, jwtPayload.userId);
+  res.status(200).json({
+    message: "update successfully",
+  });
+});
+
+router.post('/updateIntroduce', passport.authenticate('jwt', { session: false }), function (req, res, next) {
+
+  let tokens = req.headers.authorization.split(" ")[1];
+  var jwtPayload = jwt.verify(tokens, 'your_jwt_secret');
+  introduceModel.findByIdUser(jwtPayload.userId)
+    .then(introduce => {
+      if (introduce.length === 0) {
+        let newIntroduce = {
+          id_user: jwtPayload.userId,
+          content: req.body.content
+        };
+        introduceModel.add(newIntroduce);
+        return res.status(200).json({
+          message: "update successfully",
+        });
       }
-      if (req.body.phone) {
-        currentUser.phone = req.body.phone
-      }
-      if (req.body.gender) {
-        currentUser.gender = req.body.gender
-      }
-      currentUser.save();
-      const token = jwt.sign({ email: currentUser.email, name: currentUser.name, _id: currentUser._id }, 'your_jwt_secret');
-      return res.send({ email: currentUser.email, name: currentUser.name, phone: currentUser.phone, gender: currentUser.gender, token });
-    });
+      introduceModel.updateByIdUser(jwtPayload.userId, req.body.content)
+        .then(() => {
+          return res.status(200).json({
+            message: "update successfully",
+          });
+        })
+    })
+
 });
 
 /* POST login. */
@@ -56,8 +78,7 @@ router.post('/login', function (req, res, next) {
   passport.authenticate('user-local', { session: false }, (err, user, info) => {
     if (err || !user) {
       return res.status(400).json({
-        message: 'Something is not right',
-        user: user
+        message: info.message,
       });
     }
     req.login(user, { session: false }, (err) => {
@@ -110,6 +131,7 @@ router.post('/loginGG', function (req, res, next) {
 });
 
 router.post('/register', function (req, res, next) {
+  let saltround = 10;
   if (!req.body.email || !req.body.name || !req.body.password) {
     res.status(400).json({ message: 'please input email, name, password to create account!!!!' });
     return;
@@ -118,16 +140,21 @@ router.post('/register', function (req, res, next) {
     if (currentUser.length !== 0) {
       res.status(400).json({ message: "create account failed, email is already exist!!!" })
     } else {
+      let hash = bcrypt.hashSync(req.body.password, saltround);
       let newUser = {
         email: req.body.email,
         name: req.body.name,
-        password: req.body.password,
+        password: hash,
         role: req.body.role,
       };
       userModel.add(newUser);
       res.status(200).json({ message: 'create account successfully!!!' });
     }
   })
+});
+
+router.get('/tutor', function (req, res, next) {
+
 });
 
 module.exports = router;
