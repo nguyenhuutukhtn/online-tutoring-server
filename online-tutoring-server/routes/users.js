@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 const jwt = require('jsonwebtoken');
 const userModel = require('../Model/Users');
-const introduceModel = require('../Model/Introduce');
+
 const passport = require('passport');
 const passportJWT = require("passport-jwt");
 const ExtractJWT = passportJWT.ExtractJwt;
@@ -20,9 +20,18 @@ router.get('/me', passport.authenticate('jwt', { session: false }), function (re
 });
 
 router.post('/changePassword', passport.authenticate('jwt', { session: false }), function (req, res, next) {
-  const user = userModel.findOne({ email: req.user.email })
+  let tokens = req.headers.authorization.split(" ")[1];
+  var jwtPayload = jwt.verify(tokens, 'your_jwt_secret');
+  let saltround = 10;
+  userModel.singleById(jwtPayload.userId)
     .then(currentUser => {
-      if (currentUser.password !== req.body.currentPassword) {
+      if (currentUser.length === 0) {
+        res.status(400).json({ message: "account do not exist" });
+        return;
+      }
+      console.log('---user----', currentUser[0].password);
+      let ret = bcrypt.compareSync(req.body.currentPassword, currentUser[0].password);
+      if (!ret) {
         console.log('yyyyyyy');
         res.status(400).json({ message: "change password failed, current password incorrect!!!" });
         return;
@@ -31,9 +40,15 @@ router.post('/changePassword', passport.authenticate('jwt', { session: false }),
         res.status(400).json({ message: "change password failed, confirm password do not match with new password!!!" })
         return;
       }
-      currentUser.password = req.body.newPassword;
-      currentUser.save();
-      return res.send(req.user);
+      let hash = bcrypt.hashSync(req.body.newPassword, saltround);
+      userModel.changePassword(jwtPayload.userId, hash)
+        .then(() => {
+          res.status(200).json({ message: "change password successfully" })
+          return;
+        })
+        .catch(err => {
+          res.status(400).json({ message: err });
+        })
     });
 });
 
@@ -47,31 +62,7 @@ router.post('/changeProfile', passport.authenticate('jwt', { session: false }), 
   });
 });
 
-router.post('/updateIntroduce', passport.authenticate('jwt', { session: false }), function (req, res, next) {
 
-  let tokens = req.headers.authorization.split(" ")[1];
-  var jwtPayload = jwt.verify(tokens, 'your_jwt_secret');
-  introduceModel.findByIdUser(jwtPayload.userId)
-    .then(introduce => {
-      if (introduce.length === 0) {
-        let newIntroduce = {
-          id_user: jwtPayload.userId,
-          content: req.body.content
-        };
-        introduceModel.add(newIntroduce);
-        return res.status(200).json({
-          message: "update successfully",
-        });
-      }
-      introduceModel.updateByIdUser(jwtPayload.userId, req.body.content)
-        .then(() => {
-          return res.status(200).json({
-            message: "update successfully",
-          });
-        })
-    })
-
-});
 
 /* POST login. */
 router.post('/login', function (req, res, next) {
@@ -151,10 +142,6 @@ router.post('/register', function (req, res, next) {
       res.status(200).json({ message: 'create account successfully!!!' });
     }
   })
-});
-
-router.get('/tutor', function (req, res, next) {
-
 });
 
 module.exports = router;
