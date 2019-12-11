@@ -122,6 +122,15 @@ router.get('/:tutorId', function (req, res, next) {
         })
 });
 
+router.post('/uploadAvatar', async function (req, res ,next) {
+    const avatarUrl = req.body.avatarUrl;
+    const id = req.body.id;
+    const userData = await userModel.updateAvatar(id, avatarUrl);
+    if (!userData) {
+      res.status(400).json({message: 'update avatar not success'});
+    }
+    res.status(200).json({message: 'update data success '});
+  });
 
 
 module.exports = router;

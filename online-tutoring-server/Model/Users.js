@@ -36,8 +36,8 @@ module.exports = {
         (SELECT user.*, AVG(rate_and_comment.rate) as avgrate
         FROM user
         LEFT JOIN rate_and_comment
-        ON user.id = rate_and_comment.id_teacher 
-        where user.role = "tutor" 
+        ON user.id = rate_and_comment.id_teacher
+        where user.role = "tutor"
         GROUP BY id) Temp on policy.id_teacher = Temp.id
         GROUP BY Temp.id, policy.id_teacher`;
         if (limit !== 0) {
@@ -59,7 +59,7 @@ module.exports = {
         (SELECT user.*, AVG(rate_and_comment.rate) as avgrate
         FROM user
         LEFT JOIN rate_and_comment
-        ON user.id = rate_and_comment.id_teacher 
+        ON user.id = rate_and_comment.id_teacher
         where user.role = "tutor" and user.id = ${id}
         GROUP BY id) Temp on policy.id_teacher = Temp.id
         GROUP BY Temp.id, policy.id_teacher`;
@@ -70,5 +70,8 @@ module.exports = {
         from policy join user on policy.id_student = user.id
         where policy.id_teacher = ${id}`;
         return db.load(sql);
-    }
+    },
+    updateAvatar: (id, avatarUrl) => {
+        return db.load(`update user set avatar='${avatarUrl}' where id=${id} `)
+    },
 }
