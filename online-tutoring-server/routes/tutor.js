@@ -3,7 +3,7 @@ var router = express.Router();
 const userModel = require('../Model/Users');
 const introduceModel = require('../Model/Introduce');
 const rateAndCommentModel = require('../Model/RateAndComment.js');
-const tagSkillModel = require('../Model/TagSkill');
+const tagSkillTutorModel = require('../Model/TagTutor');
 const policyModel = require('../Model/Policy')
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
@@ -34,20 +34,58 @@ router.post('/updateIntroduce', passport.authenticate('jwt', { session: false })
         })
 
 });
+
+router.post('/updateProfile', passport.authenticate('jwt', { session: false }), (req, res) => {
+    let tokens = req.headers.authorization.split(" ")[1];
+    var jwtPayload = jwt.verify(tokens, 'your_jwt_secret');
+    tagSkillTutorModel.deleteByTutorId(jwtPayload.userId)
+        .then(() => {
+            let updateIntroduce = introduceModel.updateByIdUser(jwtPayload.userId, req.body.introduce);
+            let updateInfo = userModel.updateProfile(req.body.name, req.body.address, jwtPayload.userId);
+            let updatePricePerHour = userModel.updatePricePerHour(req.body.pricePerHour, jwtPayload.userId);
+            let updateSkill = req.body.listSkill.map(skill => {
+                let newSkill = {
+                    id_tag: skill,
+                    id_teacher: jwtPayload.userId
+                };
+                return tagSkillTutorModel.add(newSkill);
+            });
+            Promise.all([...updateSkill, updateInfo, updateIntroduce, updatePricePerHour])
+                .then(() => {
+                    return res.status(200).json({ message: "update successfully" });
+                })
+        })
+        .catch(err => {
+            return res.status(400).json({ error: err });
+        })
+});
+
 router.get('/list', function (req, res, next) {
     let page = req.query.p || 1;
-    let limit = 10;
+    let limit = 9;
     let offset = limit * (page - 1);
     let listTutor = userModel.allTutor(limit, offset);
     let countAllTutor = userModel.countAllTutor();
     Promise.all([countAllTutor, listTutor])
         .then(values => {
-            return res.status(200).json({ count: values[0][0].count, data: values[1] });
+            listTutor = values[1].map(tutor => {
+                return {
+                    id: tutor.id,
+                    name: tutor.name,
+                    address: tutor.address,
+                    avatar: tutor.avatar,
+                    pricePerHour: tutor.price_per_hour,
+                    avgRate: tutor.avgrate,
+                    successfullyRatio: tutor.completePolicy / tutor.totalPolicy * 100
+                }
+            })
+            return res.status(200).json({ count: values[0][0].count, data: listTutor });
         })
         .catch(err => {
             return res.status(500).json({ error: err })
         })
 });
+
 router.get('/policy', passport.authenticate('jwt', { session: false }), function (req, res, next) {
     let tokens = req.headers.authorization.split(" ")[1];
     var jwtPayload = jwt.verify(tokens, 'your_jwt_secret');
@@ -62,13 +100,22 @@ router.get('/policy', passport.authenticate('jwt', { session: false }), function
 
 router.get('/:tutorId', function (req, res, next) {
     let getTutorInfo = userModel.getTutorById(req.params.tutorId);
-    let getTutorRateAndComment = rateAndCommentModel.findByIdTutor(req.params.tutorId);
+    let getTutorRateAndComment = rateAndCommentModel.findByTutorId(req.params.tutorId);
     let getTutorIntroduce = introduceModel.findByIdUser(req.params.tutorId);
-    let getTutorSkill = tagSkillModel.findByIdTutor(req.params.tutorId);
+    let getTutorSkill = tagSkillTutorModel.findByTutorId(req.params.tutorId);
     let getOldStudent = userModel.getOldStudentByTutorId(req.params.tutorId)
     Promise.all([getTutorInfo, getTutorRateAndComment, getTutorIntroduce, getTutorSkill, getOldStudent])
         .then(values => {
-            return res.status(200).json({ info: values[0], rateAndComment: values[1], introduce: values[2], skill: values[3], listOldStudent: values[4] });
+            tutorInfo = {
+                id: values[0][0].id,
+                name: values[0][0].name,
+                address: values[0][0].address,
+                avatar: values[0][0].avatar,
+                pricePerHour: values[0][0].price_per_hour,
+                avgRate: values[0][0].avgrate,
+                successfullyRatio: values[0][0].completePolicy / values[0][0].totalPolicy * 100
+            }
+            return res.status(200).json({ info: tutorInfo, rateAndComment: values[1], introduce: values[2], skill: values[3], listOldStudent: values[4] });
         })
         .catch(err => {
             return res.status(500).json({ error: err })

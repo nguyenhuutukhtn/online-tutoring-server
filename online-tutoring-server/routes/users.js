@@ -14,10 +14,6 @@ router.get('/', function (req, res, next) {
   res.send('respond with a resource');
 });
 
-/* GET user profile. */
-router.get('/me', passport.authenticate('jwt', { session: false }), function (req, res, next) {
-  res.send(req.user);
-});
 
 router.post('/changePassword', passport.authenticate('jwt', { session: false }), function (req, res, next) {
   let tokens = req.headers.authorization.split(" ")[1];
@@ -29,10 +25,8 @@ router.post('/changePassword', passport.authenticate('jwt', { session: false }),
         res.status(400).json({ message: "account do not exist" });
         return;
       }
-      console.log('---user----', currentUser[0].password);
       let ret = bcrypt.compareSync(req.body.currentPassword, currentUser[0].password);
       if (!ret) {
-        console.log('yyyyyyy');
         res.status(400).json({ message: "change password failed, current password incorrect!!!" });
         return;
       }

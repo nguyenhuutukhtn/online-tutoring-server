@@ -22,6 +22,9 @@ module.exports = {
     updateProfile: (name, address, id) => {
         return db.load(`update user set name = "${name}", address = "${address}" where id = ${id} `);
     },
+    updatePricePerHour: (price, id) => {
+        return db.load(`update user set price_per_hour = "${price}" where id = ${id} `);
+    },
     changePassword: (id, newPassword) => {
         let sql = `update user set password = "${newPassword}" where id = ${id}`;
         return db.load(sql);
