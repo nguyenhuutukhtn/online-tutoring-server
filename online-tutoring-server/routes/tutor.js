@@ -146,5 +146,31 @@ router.post('/uploadAvatar', async function (req, res, next) {
     res.status(200).json({ message: 'update data success ' });
 });
 
+router.post('/approvePolicy', passport.authenticate('jwt', { session: false }), (req, res) => {
+    let tokens = req.headers.authorization.split(" ")[1];
+    var jwtPayload = jwt.verify(tokens, 'your_jwt_secret');
+    const policyId = req.body.id;
+    if (!policyId) {
+        res.status(400).json({ message: "Your should pass the id of the policy" })
+    }
+    policyModel.findPolicyByPolicyId(policyId)
+        .then((policy) => {
+            if (policy[0].id_teacher !== jwtPayload.userId) {
+                return res.status(400).json({ message: "Your can't approve the policy does not belong to you!!!" })
+            }
+            if (policy[0].status !== "new") {
+                return res.status(400).json({ message: "This policy was approved!!!" })
+            }
+            policyModel.changeStatusByPolicyId(policyId, "approve")
+                .then(() => {
+                    return res.status(200).json({ message: "approve policy successfully" })
+                })
+                .catch(err => {
+                    return res.status(500).json({ error: err });
+                })
+
+        })
+})
+
 
 module.exports = router;

@@ -10,5 +10,13 @@ module.exports = {
     },
     add: (entity) => {
         return db.add('policy', entity);
+    },
+    findPolicyByPolicyId: (id) => {
+        let sql = `select * from policy where id = ${id}`;
+        return db.load(sql);
+    },
+    changeStatusByPolicyId: (id, newStatus) => {
+        let sql = `update policy set status = "${newStatus}" where id = ${id}`;
+        return db.load(sql);
     }
 }
