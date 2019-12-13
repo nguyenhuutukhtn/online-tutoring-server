@@ -62,10 +62,24 @@ router.post('/updateProfile', passport.authenticate('jwt', { session: false }), 
 
 router.get('/list', function (req, res, next) {
     let page = req.query.p || 1;
+    let skill = req.query.skill;
+    let from = req.query.from || 0;
+    let to = req.query.to || Number.MAX_SAFE_INTEGER;
+
+    if (skill) {
+        console.log('-----skilll', skill);
+    }
+    if (from) {
+        console.log('-----from', from);
+    }
+    if (to) {
+        console.log('-----to', to);
+    }
+
     let limit = 9;
     let offset = limit * (page - 1);
-    let listTutor = userModel.allTutor(limit, offset);
-    let countAllTutor = userModel.countAllTutor();
+    let listTutor = userModel.allTutor(limit, offset, skill, from, to);
+    let countAllTutor = userModel.countAllTutor(skill, from, to);
     Promise.all([countAllTutor, listTutor])
         .then(values => {
             listTutor = values[1].map(tutor => {
@@ -122,15 +136,15 @@ router.get('/:tutorId', function (req, res, next) {
         })
 });
 
-router.post('/uploadAvatar', async function (req, res ,next) {
+router.post('/uploadAvatar', async function (req, res, next) {
     const avatarUrl = req.body.avatarUrl;
     const id = req.body.id;
     const userData = await userModel.updateAvatar(id, avatarUrl);
     if (!userData) {
-      res.status(400).json({message: 'update avatar not success'});
+        res.status(400).json({ message: 'update avatar not success' });
     }
-    res.status(200).json({message: 'update data success '});
-  });
+    res.status(200).json({ message: 'update data success ' });
+});
 
 
 module.exports = router;

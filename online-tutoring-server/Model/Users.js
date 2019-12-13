@@ -29,29 +29,54 @@ module.exports = {
         let sql = `update user set password = "${newPassword}" where id = ${id}`;
         return db.load(sql);
     },
-    allTutor: (limit, offset) => {
-        let sql = `select Temp.id,Temp.name, Temp.address,Temp.avatar, Temp.price_per_hour, Temp.avgrate, count(policy.id) as totalPolicy, count(case policy.status when 'complete' then 1 else null end) as completePolicy
-        from  policy
-        Right Join
-        (SELECT user.*, AVG(rate_and_comment.rate) as avgrate
-        FROM user
-        LEFT JOIN rate_and_comment
-        ON user.id = rate_and_comment.id_teacher
-        where user.role = "tutor"
-        GROUP BY id) Temp on policy.id_teacher = Temp.id
-        GROUP BY Temp.id, policy.id_teacher`;
+    allTutor: (limit, offset, listSkill, from, to) => {
+        let whereCondition = "";
+        if (listSkill) {
+            whereCondition = ` Where tag_tutor.id_tag in (${listSkill})`;
+        }
+        let sql = `select Temp2.*
+        from tag_tutor RIGHT JOIN
+        (select Temp.id,Temp.name, Temp.address,Temp.avatar, Temp.price_per_hour, Temp.avgrate, count(policy.id) as totalPolicy, count(case policy.status when 'complete' then 1 else null end) as completePolicy
+                from  policy
+                Right Join
+                (SELECT user.*, AVG(rate_and_comment.rate) as avgrate
+                FROM user
+                LEFT JOIN rate_and_comment
+                ON user.id = rate_and_comment.id_teacher
+                where user.role = "tutor" and price_per_hour >= ${from} and price_per_hour<=${to}
+                GROUP BY id) Temp on policy.id_teacher = Temp.id
+                GROUP BY Temp.id, policy.id_teacher) Temp2 on Temp2.id = tag_tutor.id_teacher
+                ${whereCondition}
+        GROUP BY Temp2.id
+        `;
+
         if (limit !== 0) {
             sql = sql + ` limit ${limit}`
         }
         if (offset !== 0) {
-            sql = sql + `offset ${offset}`
+            sql = sql + ` offset ${offset}`
         }
-        console.log('---', sql);
+
         return db.load(sql);
     },
-    countAllTutor: () => {
-        return db.load(`select count(id) as count from user where role ="tutor"`);
+    countAllTutor: (skill, from, to) => {
+        let whereCondition = "";
+        if (skill) {
+            whereCondition = ` Where tag_tutor.id_tag in (${skill})`;
+        }
+        let sql = `select count(*) as count
+        from
+        (select temp.id
+            from tag_tutor right join
+                (select *
+                    from user 
+            where role = "tutor" and price_per_hour >=  ${from} and price_per_hour <= ${to} ) temp on temp.id = tag_tutor.id_teacher
+        ${whereCondition}
+        group by temp.id) temp2`
+        console.log('----sqlcount', sql);
+        return db.load(sql);
     },
+
     getTutorById: (id) => {
         let sql = `select Temp.id,Temp.name, Temp.address,Temp.avatar, Temp.price_per_hour, Temp.avgrate, count(policy.id) as totalPolicy, count(case policy.status when 'complete' then 1 else null end) as completePolicy
         from  policy
