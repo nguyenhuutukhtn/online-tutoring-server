@@ -65,17 +65,6 @@ router.get('/list', function (req, res, next) {
     let skill = req.query.skill;
     let from = req.query.from || 0;
     let to = req.query.to || Number.MAX_SAFE_INTEGER;
-
-    if (skill) {
-        console.log('-----skilll', skill);
-    }
-    if (from) {
-        console.log('-----from', from);
-    }
-    if (to) {
-        console.log('-----to', to);
-    }
-
     let limit = 9;
     let offset = limit * (page - 1);
     let listTutor = userModel.allTutor(limit, offset, skill, from, to);
@@ -146,7 +135,7 @@ router.post('/uploadAvatar', async function (req, res, next) {
     res.status(200).json({ message: 'update data success ' });
 });
 
-router.post('/approvePolicy', passport.authenticate('jwt', { session: false }), (req, res) => {
+router.put('/approvePolicy', passport.authenticate('jwt', { session: false }), (req, res) => {
     let tokens = req.headers.authorization.split(" ")[1];
     var jwtPayload = jwt.verify(tokens, 'your_jwt_secret');
     const policyId = req.body.id;
@@ -160,6 +149,9 @@ router.post('/approvePolicy', passport.authenticate('jwt', { session: false }), 
             }
             if (policy[0].status !== "new") {
                 return res.status(400).json({ message: "This policy was approved!!!" })
+            }
+            if (policy[0].payment_status !== "yes") {
+                return res.status(400).json({ message: "Unpaid policy can not approve!!!" })
             }
             policyModel.changeStatusByPolicyId(policyId, "approve")
                 .then(() => {
