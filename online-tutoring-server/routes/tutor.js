@@ -121,7 +121,7 @@ router.get('/:tutorId', function (req, res, next) {
             return res.status(200).json({ info: tutorInfo, rateAndComment: values[1], introduce: values[2], skill: values[3], listOldStudent: values[4] });
         })
         .catch(err => {
-            return res.status(500).json({ error: err })
+            return res.status(500).json({ error: err.toString() })
         })
 });
 

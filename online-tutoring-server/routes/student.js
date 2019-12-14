@@ -155,11 +155,13 @@ router.post('/rateAndComment', passport.authenticate('jwt', { session: false }),
     let rate = req.body.rate;
     let id_teacher = req.body.id;
     let comment = req.body.comment;
+    let date = new Date();
     rateAndCommentModel.add({
         id_student: jwtPayload.userId,
         id_teacher,
         rate,
-        comment
+        comment,
+        date
     })
         .then(() => {
             res.status(200).json({ message: "Rate and comment successfully" })
