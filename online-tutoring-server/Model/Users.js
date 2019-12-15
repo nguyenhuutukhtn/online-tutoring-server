@@ -99,4 +99,15 @@ module.exports = {
     updateAvatar: (id, avatarUrl) => {
         return db.load(`update user set avatar='${avatarUrl}' where id=${id} `)
     },
+    getOutStandingTutor: () => {
+        let sql = `SELECT Temp.* , AVG(RAC.rate) as avgrate
+        FROM rate_and_comment RAC RIGHT JOIN 
+        (SELECT U.id, U.name,U.avatar, U.address,U.price_per_hour, count(U.id) as totalPolicy, count(case P.status when 'complete' then 1 else null end) as completePolicy
+        FROM user U JOIN policy P on U.id = P.id_teacher 
+        GROUP BY U.id) Temp on Temp.id = RAC.id_teacher
+        GROUP BY Temp.id
+        ORDER BY Temp.totalPolicy DESC, avgrate DESC
+        limit 6`;
+        return db.load(sql);
+    }
 }

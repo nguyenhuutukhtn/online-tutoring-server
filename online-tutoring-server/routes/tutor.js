@@ -89,6 +89,30 @@ router.get('/list', function (req, res, next) {
         })
 });
 
+
+router.get('/listOutStanding', function (req, res, next) {
+    userModel.getOutStandingTutor()
+        .then(tutors => {
+            let result = tutors.map(tutor => {
+                return {
+                    id: tutor.id,
+                    name: tutor.name,
+                    address: tutor.address,
+                    avatar: tutor.avatar,
+                    pricePerHour: tutor.price_per_hour,
+                    avgRate: tutor.avgrate,
+                    successfullyRatio: tutor.completePolicy / tutor.totalPolicy * 100
+                }
+            })
+            return res.status(200).json({ data: result });
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err });
+        })
+});
+
+
+
 router.get('/policy', passport.authenticate('jwt', { session: false }), function (req, res, next) {
     let tokens = req.headers.authorization.split(" ")[1];
     var jwtPayload = jwt.verify(tokens, 'your_jwt_secret');
