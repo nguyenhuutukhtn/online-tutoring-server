@@ -56,6 +56,26 @@ router.post('/changeProfile', passport.authenticate('jwt', { session: false }), 
   });
 });
 
+router.get('/profile', function (req, res) {
+  let userId = req.query.id;
+  userModel.singleById(userId)
+    .then(user => {
+      return res.status(200).json({
+        data: {
+          userId: user[0].id,
+          name: user[0].name,
+          avatar: user[0].avatar,
+          address: user[0].address,
+          pricePerHour: user[0].price_per_hour,
+          role: user[0].role
+        }
+      })
+    })
+    .catch(err => {
+      return res.status(500).json({ error: err.toString() })
+    })
+});
+
 
 
 /* POST login. */
@@ -72,7 +92,7 @@ router.post('/login', function (req, res, next) {
       }
       //generate a signed son web token with the contents of user object and return it in the response
       const token = jwt.sign({ name: user[0].name, userId: user[0].id, role: user[0].role }, 'your_jwt_secret');
-      return res.json({ name: user[0].name, userId: user[0].id, role: user[0].role, token });
+      return res.json({ name: user[0].name, userId: user[0].id, role: user[0].role, avatar: user[0].avatar, address: user[0].address, pricePerHour: user[0].price_per_hour, token });
     });
   })(req, res);
 });

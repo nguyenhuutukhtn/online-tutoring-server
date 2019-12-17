@@ -111,6 +111,31 @@ router.get('/listOutStanding', function (req, res, next) {
         })
 });
 
+router.get('/introduce', function (req, res) {
+    let userId = req.query.id;
+    introduceModel.findByIdUser(userId)
+        .then(introduce => {
+            return res.status(200).json({
+                data: introduce[0]
+            })
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err.toString() })
+        })
+});
+
+router.get('/listSkill', function (req, res) {
+    let userId = req.query.id;
+    tagSkillTutorModel.findByTutorId(userId)
+        .then(listSkill => {
+            return res.status(200).json({
+                data: listSkill
+            })
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err.toString() })
+        })
+});
 
 
 router.get('/policy', passport.authenticate('jwt', { session: false }), function (req, res, next) {
@@ -149,9 +174,13 @@ router.get('/:tutorId', function (req, res, next) {
         })
 });
 
+
+
 router.post('/uploadAvatar', async function (req, res, next) {
     const avatarUrl = req.body.avatarUrl;
     const id = req.body.id;
+    console.log('---------avatarUrl', avatarUrl);
+    console.log('---------id', id);
     const userData = await userModel.updateAvatar(id, avatarUrl);
     if (!userData) {
         res.status(400).json({ message: 'update avatar not success' });
