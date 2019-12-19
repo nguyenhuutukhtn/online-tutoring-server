@@ -82,32 +82,6 @@ router.put('/completePolicy', passport.authenticate('jwt', { session: false }), 
         })
 })
 
-router.put('/cancelPolicy', passport.authenticate('jwt', { session: false }), (req, res) => {
-    let tokens = req.headers.authorization.split(" ")[1];
-    var jwtPayload = jwt.verify(tokens, 'your_jwt_secret');
-    const policyId = req.body.id;
-    if (!policyId) {
-        res.status(400).json({ message: "Your should pass the id of the policy" })
-    }
-    policyModel.findPolicyByPolicyId(policyId)
-        .then((policy) => {
-            if (policy[0].id_student !== jwtPayload.userId) {
-                return res.status(400).json({ message: "Your can't cancel the policy does not belong to you!!!" })
-            }
-            if (policy[0].status !== "approve") {
-                return res.status(400).json({ message: "This policy can't cancel!!!" })
-            }
-            policyModel.changeStatusByPolicyId(policyId, "cancel")
-                .then(() => {
-                    return res.status(200).json({ message: "cancel policy successfully" })
-                })
-                .catch(err => {
-                    return res.status(500).json({ error: err });
-                })
-
-        })
-})
-
 router.put('/payPolicy', passport.authenticate('jwt', { session: false }), (req, res) => {
     let tokens = req.headers.authorization.split(" ")[1];
     var jwtPayload = jwt.verify(tokens, 'your_jwt_secret');
