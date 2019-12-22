@@ -8,14 +8,14 @@ module.exports = {
         }
         let sql = `select P.id, P.status, P.register_date,P.price, P.hours_hire,P.payment_status, U.name, U.avatar as student_avatar
         from policy P join user U on P.id_student = U.id
-        ${whereCondition}`;
+        ${whereCondition} ORDER BY register_date desc `;
         if (limit !== 0) {
             sql = sql + ` limit ${limit}`
         }
         if (offset !== 0) {
             sql = sql + ` offset ${offset}`
         }
-        console.log('----poli', sql);
+        //console.log('----poli', sql);
         return db.load(sql);
     },
     countPolicyByTutorId: (id, isNew) => {
@@ -26,13 +26,42 @@ module.exports = {
         let sql = `select count(*) as count
         from policy P join user U on P.id_student = U.id
         ${whereCondition}`;
+        //console.log('----poli', sql);
+        return db.load(sql);
+    },
+    findPolicyByStudentId: (id, unpaidPolicy, validPolicy, limit, offset) => {
+        let whereCondition = `where id_student = ${id} `;
+        if (unpaidPolicy) {
+            whereCondition = whereCondition.concat('and P.payment_status="no"');
+        } else {
+            if (validPolicy) {
+                whereCondition = whereCondition.concat('and P.status="approve"');
+            }
+        }
+        let sql = `select P.id, P.status, P.register_date,P.price, P.hours_hire,P.payment_status, U.name, U.avatar as tutor_avatar
+        from policy P join user U on P.id_teacher = U.id
+        ${whereCondition} ORDER BY register_date desc `;
+        if (limit !== 0) {
+            sql = sql + ` limit ${limit}`
+        }
+        if (offset !== 0) {
+            sql = sql + ` offset ${offset}`
+        }
         console.log('----poli', sql);
         return db.load(sql);
     },
-    findPolicyByStudentId: (id) => {
-        let sql = `select P.id, P.status, P.register_date,P.price, P.hours_hire,P.payment_status, U.name
+    countPolicyByStudentId: (id, unpaidPolicy, validPolicy) => {
+        let whereCondition = `where id_student = ${id} `;
+        if (unpaidPolicy) {
+            whereCondition = whereCondition.concat('and P.payment_status="no"');
+        } else {
+            if (validPolicy) {
+                whereCondition = whereCondition.concat('and P.status="approve"');
+            }
+        }
+        let sql = `select count(*) as count
         from policy P join user U on P.id_teacher = U.id
-        where id_student = ${id}`;
+        ${whereCondition}`;
         console.log('----poli', sql);
         return db.load(sql);
     },

@@ -240,6 +240,12 @@ router.put('/cancelPolicy', passport.authenticate('jwt', { session: false }), (r
             }
             policyModel.changeStatusByPolicyId(policyId, "cancel")
                 .then(() => {
+                    if (policy[0].payment_status === "yes") {
+                        userModel.addMoney(policy[0].price * 0.95, policy[0].id_student)
+                            .then(() => {
+                                return res.status(200).json({ message: "cancel policy successfully" });
+                            })
+                    }
                     return res.status(200).json({ message: "cancel policy successfully" })
                 })
                 .catch(err => {
