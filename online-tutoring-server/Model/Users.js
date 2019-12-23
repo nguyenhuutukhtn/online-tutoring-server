@@ -4,6 +4,12 @@ module.exports = {
     add: (entity) => {
         return db.add('user', entity);
     },
+    activeById: (id) => {
+        return db.load(`update user set active = "yes" where id = ${id} `);
+    },
+    unActiveById: (id) => {
+        return db.load(`update user set active = "no" where id = ${id} `);
+    },
     singleById: (id) => {
         return db.load(`select * from user where id=${id}`)
     },

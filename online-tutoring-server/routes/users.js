@@ -8,11 +8,23 @@ const passport = require('passport');
 const passportJWT = require("passport-jwt");
 const ExtractJWT = passportJWT.ExtractJwt;
 const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
+const emailAccount = require('../const/emailAccount');
+console.log('---------emailAccount', emailAccount);
 
 
 /* GET users listing. */
 router.get('/', function (req, res, next) {
   res.send('respond with a resource');
+});
+
+const smtpTransport = nodemailer.createTransport({
+  host: "gmail.com",
+  service: "Gmail",
+  auth: {
+    user: emailAccount.email,
+    pass: emailAccount.password
+  }
 });
 
 
@@ -78,28 +90,31 @@ router.get('/profile', function (req, res) {
     })
 });
 
-// router.get('/activeAccount', async (req, res) => {
-//   let email = req.query.email;
-//   let hash = req.query.hash;
-//   con
-//   userModel.findByEmail(email)
-//     .then(user => {
-//       return res.status(200).json({
-//         data: {
-//           userId: user[0].id,
-//           name: user[0].name,
-//           avatar: user[0].avatar,
-//           address: user[0].address,
-//           pricePerHour: user[0].price_per_hour,
-//           role: user[0].role,
-//           balance: user[0].balance
-//         }
-//       })
-//     })
-//     .catch(err => {
-//       return res.status(500).json({ error: err.toString() })
-//     })
-// });
+router.get('/activeAccount', async (req, res) => {
+  let email = req.query.email;
+  let hash = req.query.hash;
+  const currentUser = await userModel.findByEmail(email);
+  if (currentUser.length === 0) {
+    return res.status(400).json({
+      message: "unidentified"
+    });
+  }
+  let ret = bcrypt.compareSync(email, hash);
+  if (!ret) {
+    return res.status(400).json({
+      message: "active account fail, wrong hash"
+    });
+  }
+  userModel.activeById(currentUser[0].id)
+    .then(() => {
+      return res.status(200).json({
+        success: "active account successfully"
+      });
+    })
+    .catch(err => {
+      return res.status(500).json({ error: err.toString() })
+    })
+});
 
 
 
@@ -160,7 +175,7 @@ router.post('/loginGG', function (req, res, next) {
   })(req, res);
 });
 
-router.post('/register', function (req, res, next) {
+router.post('/register', async (req, res) => {
   let saltround = 10;
   if (!req.body.email || !req.body.name || !req.body.password) {
     res.status(400).json({ message: 'please input email, name, password to create account!!!!' });
@@ -168,7 +183,7 @@ router.post('/register', function (req, res, next) {
   }
   userModel.findByEmail(req.body.email).then((currentUser) => {
     if (currentUser.length !== 0) {
-      res.status(400).json({ message: "create account failed, email is already exist!!!" })
+      return res.status(400).json({ message: "create account failed, email is already exist!!!" })
     } else {
       let hash = bcrypt.hashSync(req.body.password, saltround);
       let newUser = {
@@ -177,34 +192,58 @@ router.post('/register', function (req, res, next) {
         password: hash,
         role: req.body.role,
       };
-      userModel.add(newUser);
-      res.status(200).json({ message: 'create account successfully!!!' });
+      userModel.add(newUser)
+        .then(async () => {
+          const hashEmail = bcrypt.hashSync(req.body.email, saltround);
+          await sendmailRecover(req.body.email, hashEmail);
+          return res.status(200).json({ message: 'create account successfully!!!' });
+        })
+
     }
   })
 });
+
+const sendmailRecover = async (email, hash) => {
+  const link = `http://localhost:3100/users/activeAccount?email=${email}&hash=${hash}`
+  const mailOptions = {
+    to: email,
+    subject: "Kích hoạt tài khoản smart tutoring",
+    html:
+      "Chào bạn!,<br> Hãy click vào đường dẫn bên dưới để kích hoạt tài khoản <br><a href=" +
+      link +
+      ">Click để kích hoạt</a>"
+  };
+  // eslint-disable-next-line no-unused-vars
+  smtpTransport.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      console.log('-------', error.toString());
+    }
+  });
+};
+
 
 
 router.get('/getMessage', async function (req, res, next) {
   const idStudent = req.query.idStudent;
   const idTutor = req.query.idTutor;
   if (!idStudent || !idTutor) {
-   return res.status(400).json({message: 'id invalid, please try again'});
+    return res.status(400).json({ message: 'id invalid, please try again' });
   }
   const allMessage = await messageModel.getAllMessageById(idStudent, idTutor);
-  res.status(200).json({data: allMessage});
+  res.status(200).json({ data: allMessage });
 });
 
-router.post('/sendMessage', async function (req,res,next) {
+router.post('/sendMessage', async function (req, res, next) {
   try {
     req.body.time = new Date();
     await messageModel.add(req.body);
-    res.status(200).json({message: 'add message success'});
+    res.status(200).json({ message: 'add message success' });
   } catch (error) {
-    return res.status(400).json({message: 'id invalid, please try again'});
+    return res.status(400).json({ message: 'id invalid, please try again' });
   }
 });
 
-router.get('/getConverstationList', async function(req, res, next) {
+router.get('/getConverstationList', async function (req, res, next) {
   const id = req.query.id;
   const listtAllMessage = await messageModel.getAllMessage(id);
   const listId = [];
@@ -224,7 +263,7 @@ router.get('/getConverstationList', async function(req, res, next) {
     value.forEach(elem => {
       data.push(elem[0]);
     })
-    return res.status(200).json({data: data});
+    return res.status(200).json({ data: data });
   })
 });
 module.exports = router;
