@@ -17,6 +17,9 @@ passport.use('user-local', new LocalStrategy({
                 if (user.length === 0) {
                     return cb(null, false, { message: 'Incorrect email.' });
                 }
+                if (user[0].active === "no") {
+                    return cb(null, false, { message: 'Account is lock' });
+                }
                 let ret = bcrypt.compareSync(password, user[0].password);
 
                 if (ret) {

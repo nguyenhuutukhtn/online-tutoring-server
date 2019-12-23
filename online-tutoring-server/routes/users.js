@@ -67,7 +67,8 @@ router.get('/profile', function (req, res) {
           avatar: user[0].avatar,
           address: user[0].address,
           pricePerHour: user[0].price_per_hour,
-          role: user[0].role
+          role: user[0].role,
+          balance: user[0].balance
         }
       })
     })
@@ -75,6 +76,29 @@ router.get('/profile', function (req, res) {
       return res.status(500).json({ error: err.toString() })
     })
 });
+
+// router.get('/activeAccount', async (req, res) => {
+//   let email = req.query.email;
+//   let hash = req.query.hash;
+//   con
+//   userModel.findByEmail(email)
+//     .then(user => {
+//       return res.status(200).json({
+//         data: {
+//           userId: user[0].id,
+//           name: user[0].name,
+//           avatar: user[0].avatar,
+//           address: user[0].address,
+//           pricePerHour: user[0].price_per_hour,
+//           role: user[0].role,
+//           balance: user[0].balance
+//         }
+//       })
+//     })
+//     .catch(err => {
+//       return res.status(500).json({ error: err.toString() })
+//     })
+// });
 
 
 
