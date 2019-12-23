@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 const jwt = require('jsonwebtoken');
 const userModel = require('../Model/Users');
+const messageModel = require('../Model/Message');
 
 const passport = require('passport');
 const passportJWT = require("passport-jwt");
@@ -182,4 +183,48 @@ router.post('/register', function (req, res, next) {
   })
 });
 
+
+router.get('/getMessage', async function (req, res, next) {
+  const idStudent = req.query.idStudent;
+  const idTutor = req.query.idTutor;
+  if (!idStudent || !idTutor) {
+   return res.status(400).json({message: 'id invalid, please try again'});
+  }
+  const allMessage = await messageModel.getAllMessageById(idStudent, idTutor);
+  res.status(200).json({data: allMessage});
+});
+
+router.post('/sendMessage', async function (req,res,next) {
+  try {
+    req.body.time = new Date();
+    await messageModel.add(req.body);
+    res.status(200).json({message: 'add message success'});
+  } catch (error) {
+    return res.status(400).json({message: 'id invalid, please try again'});
+  }
+});
+
+router.get('/getConverstationList', async function(req, res, next) {
+  const id = req.query.id;
+  const listtAllMessage = await messageModel.getAllMessage(id);
+  const listId = [];
+  listtAllMessage.forEach(elem => {
+    let idTemp = elem.idSender == id ? elem.idReceiver : elem.idSender;
+    if (!listId.includes(idTemp)) {
+      listId.push(idTemp);
+    }
+  });
+  listInfoUser = []
+  listId.forEach(elem => {
+    const infoUser = userModel.singleById(elem);
+    listInfoUser.push(infoUser);
+  })
+  Promise.all(listInfoUser).then(value => {
+    const data = [];
+    value.forEach(elem => {
+      data.push(elem[0]);
+    })
+    return res.status(200).json({data: data});
+  })
+});
 module.exports = router;
