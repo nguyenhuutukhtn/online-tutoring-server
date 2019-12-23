@@ -109,5 +109,13 @@ module.exports = {
         ORDER BY Temp.totalPolicy DESC, avgrate DESC
         limit 6`;
         return db.load(sql);
+    },
+    addMoney: (amount, id) => {
+        let sql = `update user set balance = balance + ${amount} where id = ${id}`;
+        return db.load(sql);
+    },
+    subtractMoney: (amount, id) => {
+        let sql = `update user set balance = balance - ${amount} where id = ${id}`;
+        return db.load(sql);
     }
 }
