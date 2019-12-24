@@ -9,6 +9,7 @@ var usersRouter = require('./routes/users');
 var tutorRouter = require('./routes/tutor');
 var skillRouter = require('./routes/skill');
 var studentRouter = require('./routes/student');
+var paymentRouter = require('./routes/payment');
 require('./passport');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -31,14 +32,15 @@ app.use('/users', usersRouter);
 app.use('/tutor', tutorRouter);
 app.use('/skill', skillRouter);
 app.use('/student', studentRouter);
+app.use('/payment', paymentRouter);
 
 // catch 404 and forward to error handler
-app.use(function (req, res, next) {
+app.use(function(req, res, next) {
   next(createError(404));
 });
 
 // error handler
-app.use(function (err, req, res, next) {
+app.use(function(err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
