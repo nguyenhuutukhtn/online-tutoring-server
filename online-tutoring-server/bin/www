@@ -20,13 +20,24 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
+let dictionary = {};
 const io = socketIO(server);
 io.on('connection', socket => {
-  console.log('new user connected-----');
-  console.log('socket id-------', socket.id);
   socket.on('disconnect', () => {
-    console.log('User was disconnected');
+    const idx = Object.values(dictionary).indexOf(socket.id);
+    delete dictionary[Object.keys(dictionary)[idx]];
   });
+  socket.on('send-user-id', (data) => {
+    dictionary = {
+      ...dictionary,
+      [data]: socket.id
+    }
+  })
+  socket.on('message-to', (data) => {
+    const { idReceiver } = data;
+    let To = dictionary[idReceiver];
+    io.to(To).emit("message-from", data);
+  })
 });
 /**
  * Listen on provided port, on all network interfaces.
