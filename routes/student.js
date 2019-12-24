@@ -69,6 +69,9 @@ router.put('/completePolicy', passport.authenticate('jwt', { session: false }), 
     let tokens = req.headers.authorization.split(" ")[1];
     var jwtPayload = jwt.verify(tokens, 'your_jwt_secret');
     const policyId = req.body.id;
+    let rate = req.body.rate;
+    let comment = req.body.comment;
+    let date = new Date();
     if (!policyId) {
         res.status(400).json({ message: "Your should pass the id of the policy" })
     }
@@ -81,10 +84,9 @@ router.put('/completePolicy', passport.authenticate('jwt', { session: false }), 
     }
 
     await policyModel.changeStatusByPolicyId(policyId, "complete");
+    await policyModel.updateCompleteDateByPolicyId(policyId, date);
     await userModel.addMoney(currentPolicy[0].price * 0.95, currentPolicy[0].id_teacher);
-    let rate = req.body.rate;
-    let comment = req.body.comment;
-    let date = new Date();
+
     rateAndCommentModel.add({
         id_student: jwtPayload.userId,
         id_teacher: currentPolicy[0].id_teacher,

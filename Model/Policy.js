@@ -81,5 +81,9 @@ module.exports = {
     changePaymentStatusByPolicyId: (id, newStatus) => {
         let sql = `update policy set payment_status = "${newStatus}" where id = ${id}`;
         return db.load(sql);
-    }
+    },
+    updateCompleteDateByPolicyId: (id, date) => {
+        let sql = `update policy set complete_date = "${date}" where id = ${id}`;
+        return db.load(sql);
+    },
 }
