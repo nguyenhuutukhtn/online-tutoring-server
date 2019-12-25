@@ -203,7 +203,7 @@ router.post('/register', async (req, res) => {
 });
 
 const sendmailRecover = async (email, hash) => {
-  const link = `http://localhost:3100/users/activeAccount?email=${email}&hash=${hash}`
+  const link = `https://smart-tutor-server.herokuapp.com/users/activeAccount?email=${email}&hash=${hash}`
   const mailOptions = {
     to: email,
     subject: "Kích hoạt tài khoản smart tutoring",
