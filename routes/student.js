@@ -72,6 +72,7 @@ router.put('/completePolicy', passport.authenticate('jwt', { session: false }), 
     let rate = req.body.rate;
     let comment = req.body.comment;
     let date = new Date();
+    let completeDate = moment(date).format('YYYY-MM-DD HH:mm:ss');
     if (!policyId) {
         res.status(400).json({ message: "Your should pass the id of the policy" })
     }
@@ -84,7 +85,7 @@ router.put('/completePolicy', passport.authenticate('jwt', { session: false }), 
     }
 
     await policyModel.changeStatusByPolicyId(policyId, "complete");
-    await policyModel.updateCompleteDateByPolicyId(policyId, date);
+    await policyModel.updateCompleteDateByPolicyId(policyId, completeDate);
     await userModel.addMoney(currentPolicy[0].price * 0.95, currentPolicy[0].id_teacher);
 
     rateAndCommentModel.add({

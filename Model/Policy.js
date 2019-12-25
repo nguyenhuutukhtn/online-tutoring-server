@@ -15,7 +15,6 @@ module.exports = {
         if (offset !== 0) {
             sql = sql + ` offset ${offset}`
         }
-        //console.log('----poli', sql);
         return db.load(sql);
     },
     countPolicyByTutorId: (id, isNew) => {
@@ -26,7 +25,6 @@ module.exports = {
         let sql = `select count(*) as count
         from policy P join user U on P.id_student = U.id
         ${whereCondition}`;
-        //console.log('----poli', sql);
         return db.load(sql);
     },
     findPolicyByStudentId: (id, unpaidPolicy, validPolicy, limit, offset) => {
@@ -62,7 +60,6 @@ module.exports = {
         let sql = `select count(*) as count
         from policy P join user U on P.id_teacher = U.id
         ${whereCondition}`;
-        console.log('----poli', sql);
         return db.load(sql);
     },
     add: (entity) => {
