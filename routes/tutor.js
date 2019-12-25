@@ -156,31 +156,6 @@ router.get('/policy', passport.authenticate('jwt', { session: false }), function
         })
 });
 
-router.get('/:tutorId', function (req, res, next) {
-    let getTutorInfo = userModel.getTutorById(req.params.tutorId);
-    let getTutorRateAndComment = rateAndCommentModel.findByTutorId(req.params.tutorId);
-    let getTutorIntroduce = introduceModel.findByIdUser(req.params.tutorId);
-    let getTutorSkill = tagSkillTutorModel.findByTutorId(req.params.tutorId);
-    let getOldStudent = userModel.getOldStudentByTutorId(req.params.tutorId)
-    Promise.all([getTutorInfo, getTutorRateAndComment, getTutorIntroduce, getTutorSkill, getOldStudent])
-        .then(values => {
-            tutorInfo = {
-                id: values[0][0].id,
-                name: values[0][0].name,
-                address: values[0][0].address,
-                avatar: values[0][0].avatar,
-                pricePerHour: values[0][0].price_per_hour,
-                avgRate: values[0][0].avgrate,
-                successfullyRatio: values[0][0].completePolicy / values[0][0].totalPolicy * 100
-            }
-            return res.status(200).json({ info: tutorInfo, rateAndComment: values[1], introduce: values[2], skill: values[3], listOldStudent: values[4] });
-        })
-        .catch(err => {
-            return res.status(500).json({ error: err.toString() })
-        })
-});
-
-
 
 router.post('/uploadAvatar', async function (req, res, next) {
     const avatarUrl = req.body.avatarUrl;
@@ -255,6 +230,19 @@ router.put('/cancelPolicy', passport.authenticate('jwt', { session: false }), (r
         })
 })
 
+router.get('/incomeStatistic', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    let tokens = req.headers.authorization.split(" ")[1];
+    var jwtPayload = jwt.verify(tokens, 'your_jwt_secret');
+    const year = (new Date()).getFullYear();
+    let listPolicy = await policyModel.findAllPolicyCompleteInOneYearOfTutor(jwtPayload.userId, year);
+    let result = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    listPolicy.forEach(e => {
+        let month = (new Date(e.complete_date)).getMonth();
+        result[month] = result[month] + e.price;
+    })
+    return res.status(200).json({ data: result })
+});
+
 
 router.get('/policy/:policyId', passport.authenticate('jwt', { session: false }), function (req, res, next) {
     let tokens = req.headers.authorization.split(" ")[1];
@@ -269,6 +257,29 @@ router.get('/policy/:policyId', passport.authenticate('jwt', { session: false })
         })
         .catch(err => {
             return res.status(500).json({ error: err.toString() });
+        })
+});
+router.get('/:tutorId', function (req, res, next) {
+    let getTutorInfo = userModel.getTutorById(req.params.tutorId);
+    let getTutorRateAndComment = rateAndCommentModel.findByTutorId(req.params.tutorId);
+    let getTutorIntroduce = introduceModel.findByIdUser(req.params.tutorId);
+    let getTutorSkill = tagSkillTutorModel.findByTutorId(req.params.tutorId);
+    let getOldStudent = userModel.getOldStudentByTutorId(req.params.tutorId)
+    Promise.all([getTutorInfo, getTutorRateAndComment, getTutorIntroduce, getTutorSkill, getOldStudent])
+        .then(values => {
+            tutorInfo = {
+                id: values[0][0].id,
+                name: values[0][0].name,
+                address: values[0][0].address,
+                avatar: values[0][0].avatar,
+                pricePerHour: values[0][0].price_per_hour,
+                avgRate: values[0][0].avgrate,
+                successfullyRatio: values[0][0].completePolicy / values[0][0].totalPolicy * 100
+            }
+            return res.status(200).json({ info: tutorInfo, rateAndComment: values[1], introduce: values[2], skill: values[3], listOldStudent: values[4] });
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err.toString() })
         })
 });
 

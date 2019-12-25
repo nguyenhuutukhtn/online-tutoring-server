@@ -74,6 +74,12 @@ module.exports = {
         where P.id = ${id}`;
         return db.load(sql);
     },
+    findAllPolicyCompleteInOneYearOfTutor: (id, year) => {
+        let sql = `select * 
+        from policy
+        where id_teacher = ${id} and complete_date >= STR_TO_DATE('${year}-01-01', '%Y-%m-%d') and complete_date <= STR_TO_DATE('${year}-12-31', '%Y-%m-%d')`;
+        return db.load(sql);
+    },
     changeStatusByPolicyId: (id, newStatus) => {
         let sql = `update policy set status = "${newStatus}" where id = ${id}`;
         return db.load(sql);

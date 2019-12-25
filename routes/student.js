@@ -52,7 +52,7 @@ router.get('/policy', passport.authenticate('jwt', { session: false }), function
     const unpaidPolicy = req.query.unpaidPolicy || false;
     const validPolicy = req.query.validPolicy || false;
 
-    let limit = 5;
+    let limit = 9;
     let offset = limit * (page - 1);
     let listPolicy = policyModel.findPolicyByStudentId(jwtPayload.userId, unpaidPolicy, validPolicy, limit, offset);
     let countPolicy = policyModel.countPolicyByStudentId(jwtPayload.userId, unpaidPolicy, validPolicy);

@@ -10,7 +10,6 @@ const ExtractJWT = passportJWT.ExtractJwt;
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const emailAccount = require('../const/emailAccount');
-console.log('---------emailAccount', emailAccount);
 
 
 /* GET users listing. */
